@@ -6,7 +6,6 @@ import com.gmail.nossr50.datatypes.experience.FormulaType;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.EventUtils;
 import com.gmail.nossr50.util.Misc;
 import com.gmail.nossr50.util.sounds.SoundManager;
@@ -86,13 +85,11 @@ public class Party {
         return onlineMembers;
     }
 
-    public List<Player> getVisibleMembers(Player player)
-    {
+    public List<Player> getVisibleMembers(Player player) {
         ArrayList<Player> visibleMembers = new ArrayList<>();
 
-        for(Player p : onlineMembers)
-        {
-            if(player.canSee(p))
+        for(Player p : onlineMembers) {
+            if (player.canSee(p))
                 visibleMembers.add(p);
         }
 
@@ -348,7 +345,7 @@ public class Party {
         for(UUID playerUUID : members.keySet()) {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
 
-            if(offlinePlayer.isOnline() && player.canSee((Player) offlinePlayer)) {
+            if (offlinePlayer.isOnline() && player.canSee((Player) offlinePlayer)) {
                 ChatColor onlineColor = leader.getUniqueId().equals(playerUUID) ? ChatColor.GOLD : ChatColor.GREEN;
                 coloredNames.add(onlineColor + offlinePlayer.getName());
             } else {
@@ -362,7 +359,7 @@ public class Party {
 
     private void buildChatMessage(@NotNull StringBuilder stringBuilder, String @NotNull [] names) {
         for(int i = 0; i < names.length; i++) {
-            if(i + 1 >= names.length) {
+            if (i + 1 >= names.length) {
                 stringBuilder
                         .append(names[i]);
             } else {

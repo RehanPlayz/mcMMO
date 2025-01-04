@@ -10,9 +10,8 @@ import com.gmail.nossr50.skills.repair.Repair;
 import com.gmail.nossr50.skills.repair.RepairManager;
 import com.gmail.nossr50.skills.repair.repairables.Repairable;
 import com.gmail.nossr50.util.Permissions;
-import com.gmail.nossr50.util.player.UserManager;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import com.gmail.nossr50.util.skills.RankUtils;
-import com.gmail.nossr50.util.skills.SkillActivationType;
 import com.gmail.nossr50.util.text.TextComponentFactory;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -68,7 +67,7 @@ public class RepairCommand extends SkillCommand {
 
         // SUPER REPAIR
         if (canSuperRepair) {
-            String[] superRepairStrings = getAbilityDisplayValues(SkillActivationType.RANDOM_LINEAR_100_SCALE_WITH_CAP, player, SubSkillType.REPAIR_SUPER_REPAIR);
+            String[] superRepairStrings = ProbabilityUtil.getRNGDisplayValues(mmoPlayer, SubSkillType.REPAIR_SUPER_REPAIR);
             superRepairChance = superRepairStrings[0];
             superRepairChanceLucky = superRepairStrings[1];
         }
@@ -76,9 +75,9 @@ public class RepairCommand extends SkillCommand {
 
     @Override
     protected void permissionsCheck(Player player) {
-        canSuperRepair = canUseSubskill(player, SubSkillType.REPAIR_SUPER_REPAIR);
-        canMasterRepair = canUseSubskill(player, SubSkillType.REPAIR_REPAIR_MASTERY);
-        canArcaneForge = canUseSubskill(player, SubSkillType.REPAIR_ARCANE_FORGING);
+        canSuperRepair = Permissions.canUseSubSkill(player, SubSkillType.REPAIR_SUPER_REPAIR);
+        canMasterRepair = Permissions.canUseSubSkill(player, SubSkillType.REPAIR_REPAIR_MASTERY);
+        canArcaneForge = Permissions.canUseSubSkill(player, SubSkillType.REPAIR_ARCANE_FORGING);
         canRepairDiamond = Permissions.repairMaterialType(player, MaterialType.DIAMOND);
         canRepairGold = Permissions.repairMaterialType(player, MaterialType.GOLD);
         canRepairIron = Permissions.repairMaterialType(player, MaterialType.IRON);
@@ -94,7 +93,7 @@ public class RepairCommand extends SkillCommand {
         List<String> messages = new ArrayList<>();
 
         if (canArcaneForge) {
-            RepairManager repairManager = UserManager.getPlayer(player).getRepairManager();
+            RepairManager repairManager = mmoPlayer.getRepairManager();
 
             messages.add(getStatMessage(false, true,
                     SubSkillType.REPAIR_ARCANE_FORGING,

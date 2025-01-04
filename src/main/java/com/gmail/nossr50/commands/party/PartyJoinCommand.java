@@ -4,7 +4,6 @@ import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.commands.CommandUtils;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.command.Command;
@@ -35,8 +34,7 @@ public class PartyJoinCommand implements CommandExecutor {
 
                 Player player = (Player) sender;
 
-                if(UserManager.getPlayer((Player) sender) == null)
-                {
+                if (UserManager.getPlayer((Player) sender) == null) {
                     sender.sendMessage(LocaleLoader.getString("Profile.PendingLoad"));
                     return true;
                 }
@@ -63,8 +61,7 @@ public class PartyJoinCommand implements CommandExecutor {
                     return true;
                 }
 
-                if(mcMMO.p.getPartyManager().isPartyFull(player, targetParty))
-                {
+                if (mcMMO.p.getPartyManager().isPartyFull(player, targetParty)) {
                     player.sendMessage(LocaleLoader.getString("Commands.Party.PartyFull", targetParty.toString()));
                     return true;
                 }

@@ -7,8 +7,9 @@ import com.gmail.nossr50.datatypes.treasure.Rarity;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.skills.fishing.FishingManager;
-import com.gmail.nossr50.util.player.UserManager;
-import com.gmail.nossr50.util.random.RandomChanceUtil;
+import com.gmail.nossr50.util.Permissions;
+import com.gmail.nossr50.util.random.Probability;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import com.gmail.nossr50.util.skills.RankUtils;
 import com.gmail.nossr50.util.text.StringUtils;
 import com.gmail.nossr50.util.text.TextComponentFactory;
@@ -48,7 +49,7 @@ public class FishingCommand extends SkillCommand {
 
     @Override
     protected void dataCalculations(Player player, float skillValue) {
-        FishingManager fishingManager = UserManager.getPlayer(player).getFishingManager();
+        FishingManager fishingManager = mmoPlayer.getFishingManager();
 
         // TREASURE HUNTER
         if (canTreasureHunt) {
@@ -71,7 +72,7 @@ public class FishingCommand extends SkillCommand {
                 }
             }
 
-            if(totalEnchantChance >= 1)
+            if (totalEnchantChance >= 1)
                 magicChance = percent.format(totalEnchantChance / 100.0);
             else
                 magicChance = percent.format(0);
@@ -79,7 +80,8 @@ public class FishingCommand extends SkillCommand {
 
         // FISHING_SHAKE
         if (canShake) {
-            String[] shakeStrings = RandomChanceUtil.calculateAbilityDisplayValuesStatic(player, PrimarySkillType.FISHING, fishingManager.getShakeChance());
+            Probability shakeProbability = Probability.ofPercent(fishingManager.getShakeChance());
+            String[] shakeStrings = ProbabilityUtil.getRNGDisplayValues(shakeProbability);
             shakeChance = shakeStrings[0];
             shakeChanceLucky = shakeStrings[1];
         }
@@ -98,12 +100,12 @@ public class FishingCommand extends SkillCommand {
 
     @Override
     protected void permissionsCheck(Player player) {
-        canTreasureHunt = canUseSubskill(player, SubSkillType.FISHING_TREASURE_HUNTER);
-        canMagicHunt = canUseSubskill(player, SubSkillType.FISHING_MAGIC_HUNTER) && canUseSubskill(player, SubSkillType.FISHING_TREASURE_HUNTER);
-        canShake = canUseSubskill(player, SubSkillType.FISHING_SHAKE);
-        canFishermansDiet = canUseSubskill(player, SubSkillType.FISHING_FISHERMANS_DIET);
-        canMasterAngler = mcMMO.getCompatibilityManager().getMasterAnglerCompatibilityLayer() != null && canUseSubskill(player, SubSkillType.FISHING_MASTER_ANGLER);
-        canIceFish = canUseSubskill(player, SubSkillType.FISHING_ICE_FISHING);
+        canTreasureHunt = Permissions.canUseSubSkill(player, SubSkillType.FISHING_TREASURE_HUNTER);
+        canMagicHunt = Permissions.canUseSubSkill(player, SubSkillType.FISHING_MAGIC_HUNTER) && Permissions.canUseSubSkill(player, SubSkillType.FISHING_TREASURE_HUNTER);
+        canShake = Permissions.canUseSubSkill(player, SubSkillType.FISHING_SHAKE);
+        canFishermansDiet = Permissions.canUseSubSkill(player, SubSkillType.FISHING_FISHERMANS_DIET);
+        canMasterAngler = mcMMO.getCompatibilityManager().getMasterAnglerCompatibilityLayer() != null && Permissions.canUseSubSkill(player, SubSkillType.FISHING_MASTER_ANGLER);
+        canIceFish = Permissions.canUseSubSkill(player, SubSkillType.FISHING_ICE_FISHING);
     }
 
     @Override
