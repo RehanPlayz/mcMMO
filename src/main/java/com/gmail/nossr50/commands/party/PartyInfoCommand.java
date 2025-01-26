@@ -6,7 +6,6 @@ import com.gmail.nossr50.datatypes.party.ShareMode;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.player.UserManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -24,8 +23,7 @@ public class PartyInfoCommand implements CommandExecutor {
         switch (args.length) {
             case 0:
             case 1:
-                if(UserManager.getPlayer((Player) sender) == null)
-                {
+                if (UserManager.getPlayer((Player) sender) == null) {
                     sender.sendMessage(LocaleLoader.getString("Profile.PendingLoad"));
                     return true;
                 }
@@ -71,8 +69,7 @@ public class PartyInfoCommand implements CommandExecutor {
 
             if (isUnlockedFeature(party, partyFeature)) {
                 unlockedPartyFeatures.add(partyFeature.getLocaleString());
-            }
-            else {
+            } else {
                 lockedPartyFeatures.add(partyFeature.getFeatureLockedLocaleString());
             }
         }

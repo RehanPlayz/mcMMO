@@ -3,6 +3,7 @@ package com.gmail.nossr50.chat.mailer;
 import com.gmail.nossr50.chat.author.Author;
 import com.gmail.nossr50.chat.message.AdminChatMessage;
 import com.gmail.nossr50.chat.message.ChatMessage;
+import com.gmail.nossr50.config.ChatConfig;
 import com.gmail.nossr50.datatypes.chat.ChatChannel;
 import com.gmail.nossr50.events.chat.McMMOAdminChatEvent;
 import com.gmail.nossr50.events.chat.McMMOChatEvent;
@@ -44,7 +45,7 @@ public class AdminChatMailer extends AbstractChatMailer {
     public @NotNull Predicate<CommandSender> predicate() {
         return (commandSender) -> commandSender.isOp()
                 || commandSender.hasPermission(MCMMO_CHAT_ADMINCHAT_PERMISSION)
-                || commandSender instanceof ConsoleCommandSender;
+                || (ChatConfig.getInstance().isConsoleIncludedInAudience(ChatChannel.ADMIN) && commandSender instanceof ConsoleCommandSender);
     }
 
     /**
@@ -56,7 +57,7 @@ public class AdminChatMailer extends AbstractChatMailer {
      * @return the styled string, based on a locale entry
      */
     public @NotNull TextComponent addStyle(@NotNull Author author, @NotNull String message, boolean canColor) {
-        if(canColor) {
+        if (canColor) {
             return LocaleLoader.getTextComponent("Chat.Style.Admin", author.getAuthoredName(ChatChannel.ADMIN), message);
         } else {
             return TextUtils.ofLegacyTextRaw(LocaleLoader.getString("Chat.Style.Admin", author.getAuthoredName(ChatChannel.ADMIN), message));
@@ -82,7 +83,7 @@ public class AdminChatMailer extends AbstractChatMailer {
         McMMOChatEvent chatEvent = new McMMOAdminChatEvent(pluginRef, chatMessage, isAsync);
         Bukkit.getPluginManager().callEvent(chatEvent);
 
-        if(!chatEvent.isCancelled()) {
+        if (!chatEvent.isCancelled()) {
             sendMail(chatMessage);
         }
     }

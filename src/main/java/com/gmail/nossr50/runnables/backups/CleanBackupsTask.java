@@ -51,13 +51,11 @@ public class CleanBackupsTask extends CancellableRunnable {
             if (isPast24Hours(date) && mcMMO.p.getGeneralConfig().getKeepLast24Hours()) {
                 // Keep all files from the last 24 hours
                 continue;
-            }
-            else if (isLastWeek(date) && !savedDays.contains(dayOfWeek) && mcMMO.p.getGeneralConfig().getKeepDailyLastWeek()) {
+            } else if (isLastWeek(date) && !savedDays.contains(dayOfWeek) && mcMMO.p.getGeneralConfig().getKeepDailyLastWeek()) {
                 // Keep daily backups of the past week
                 savedDays.add(dayOfWeek);
                 continue;
-            }
-            else {
+            } else {
                 List<Integer> savedWeeks = savedYearsWeeks.computeIfAbsent(year, k -> new ArrayList<>());
 
                 if (!savedWeeks.contains(weekOfYear) && mcMMO.p.getGeneralConfig().getKeepWeeklyPastMonth()) {
@@ -109,7 +107,7 @@ public class CleanBackupsTask extends CancellableRunnable {
     }
 
     private Date getDate(String fileName) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US);
         Date date;
 
         try {

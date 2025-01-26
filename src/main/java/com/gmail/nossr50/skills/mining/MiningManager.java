@@ -13,10 +13,10 @@ import com.gmail.nossr50.runnables.skills.AbilityCooldownTask;
 import com.gmail.nossr50.skills.SkillManager;
 import com.gmail.nossr50.util.*;
 import com.gmail.nossr50.util.player.NotificationManager;
-import com.gmail.nossr50.util.random.RandomChanceUtil;
+import com.gmail.nossr50.util.random.Probability;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import com.gmail.nossr50.util.skills.RankUtils;
 import com.gmail.nossr50.util.skills.SkillUtils;
-import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -29,18 +29,23 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import static com.gmail.nossr50.util.ItemUtils.isPickaxe;
 
 public class MiningManager extends SkillManager {
 
     public static final String BUDDING_AMETHYST = "budding_amethyst";
+    public static final Collection<Material> BLAST_MINING_BLACKLIST = Set.of(Material.SPAWNER);
 
-    public MiningManager(McMMOPlayer mcMMOPlayer) {
+    public MiningManager(@NotNull McMMOPlayer mcMMOPlayer) {
         super(mcMMOPlayer, PrimarySkillType.MINING);
     }
 
     public boolean canUseDemolitionsExpertise() {
-        if(!RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_DEMOLITIONS_EXPERTISE))
+        if (!RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_DEMOLITIONS_EXPERTISE))
             return false;
 
         return getSkillLevel() >= BlastMining.getDemolitionExpertUnlockLevel() && Permissions.demolitionsExpertise(getPlayer());
@@ -50,7 +55,7 @@ public class MiningManager extends SkillManager {
         Player player = getPlayer();
 
         return canUseBlastMining() && player.isSneaking()
-                && (ItemUtils.isPickaxe(getPlayer().getInventory().getItemInMainHand()) || player.getInventory().getItemInMainHand().getType() == mcMMO.p.getGeneralConfig().getDetonatorItem())
+                && (isPickaxe(getPlayer().getInventory().getItemInMainHand()) || player.getInventory().getItemInMainHand().getType() == mcMMO.p.getGeneralConfig().getDetonatorItem())
                 && Permissions.remoteDetonation(player);
     }
 
@@ -60,7 +65,7 @@ public class MiningManager extends SkillManager {
     }
 
     public boolean canUseBiggerBombs() {
-        if(!RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_BIGGER_BOMBS))
+        if (!RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_BIGGER_BOMBS))
             return false;
 
         return getSkillLevel() >= BlastMining.getBiggerBombsUnlockLevel() && Permissions.biggerBombs(getPlayer());
@@ -70,15 +75,25 @@ public class MiningManager extends SkillManager {
         return RankUtils.hasUnlockedSubskill(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS) && Permissions.isSubSkillEnabled(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS);
     }
 
+    public boolean canMotherLode() {
+        return Permissions.canUseSubSkill(getPlayer(), SubSkillType.MINING_MOTHER_LODE);
+    }
+
+
     /**
      * Process double drops & XP gain for Mining.
      *
      * @param blockState The {@link BlockState} to check ability activation for
      */
+    @Deprecated(since = "2.2.024", forRemoval = true)
     public void miningBlockCheck(BlockState blockState) {
+        miningBlockCheck(blockState.getBlock());
+    }
+
+    public void miningBlockCheck(Block block) {
         Player player = getPlayer();
 
-        applyXpGain(Mining.getBlockXp(blockState), XPGainReason.PVE);
+        applyXpGain(ExperienceConfig.getInstance().getXp(PrimarySkillType.MINING, block), XPGainReason.PVE);
 
         if (!Permissions.isSubSkillEnabled(player, SubSkillType.MINING_DOUBLE_DROPS)) {
             return;
@@ -88,18 +103,42 @@ public class MiningManager extends SkillManager {
             SkillUtils.handleDurabilityChange(getPlayer().getInventory().getItemInMainHand(), mcMMO.p.getGeneralConfig().getAbilityToolDamage());
         }
 
-        if(!mcMMO.p.getGeneralConfig().getDoubleDropsEnabled(PrimarySkillType.MINING, blockState.getType()) || !canDoubleDrop())
+        if (!mcMMO.p.getGeneralConfig().getDoubleDropsEnabled(PrimarySkillType.MINING, block.getType()) || !canDoubleDrop())
             return;
 
         boolean silkTouch = player.getInventory().getItemInMainHand().containsEnchantment(Enchantment.SILK_TOUCH);
 
-        if(silkTouch && !mcMMO.p.getAdvancedConfig().getDoubleDropSilkTouchEnabled())
+        if (silkTouch && !mcMMO.p.getAdvancedConfig().getDoubleDropSilkTouchEnabled())
             return;
 
+        //Mining mastery allows for a chance of triple drops
+        if (canMotherLode()) {
+            //Triple Drops failed so do a normal double drops check
+            if (!processTripleDrops(block)) {
+                processDoubleDrops(block);
+            }
+        } else {
+            //If the user has no mastery, proceed with normal double drop routine
+            processDoubleDrops(block);
+        }
+    }
+
+    private boolean processTripleDrops(@NotNull Block block) {
         //TODO: Make this readable
-        if (RandomChanceUtil.checkRandomChanceExecutionSuccess(getPlayer(), SubSkillType.MINING_DOUBLE_DROPS, true)) {
-            boolean useTriple = mmoPlayer.getAbilityMode(mcMMO.p.getSkillTools().getSuperAbility(skill)) && mcMMO.p.getAdvancedConfig().getAllowMiningTripleDrops();
-            BlockUtils.markDropsAsBonus(blockState, useTriple);
+        if (ProbabilityUtil.isSkillRNGSuccessful(SubSkillType.MINING_MOTHER_LODE, mmoPlayer)) {
+            BlockUtils.markDropsAsBonus(block, 2);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void processDoubleDrops(@NotNull Block block) {
+        //TODO: Make this readable
+        if (ProbabilityUtil.isSkillRNGSuccessful(SubSkillType.MINING_DOUBLE_DROPS, mmoPlayer)) {
+            boolean useTriple = mmoPlayer.getAbilityMode(SuperAbilityType.SUPER_BREAKER)
+                    && mcMMO.p.getAdvancedConfig().getAllowMiningTripleDrops();
+            BlockUtils.markDropsAsBonus(block, useTriple);
         }
     }
 
@@ -111,7 +150,9 @@ public class MiningManager extends SkillManager {
         Block targetBlock = player.getTargetBlock(BlockUtils.getTransparentBlocks(), BlastMining.MAXIMUM_REMOTE_DETONATION_DISTANCE);
 
         //Blast mining cooldown check needs to be first so the player can be messaged
-        if (!blastMiningCooldownOver() || targetBlock.getType() != Material.TNT || !EventUtils.simulateBlockBreak(targetBlock, player)) {
+        if (!blastMiningCooldownOver()
+                || targetBlock.getType() != Material.TNT
+                || !EventUtils.simulateBlockBreak(targetBlock, player)) {
             return;
         }
 
@@ -139,69 +180,76 @@ public class MiningManager extends SkillManager {
      * @param yield The % of blocks to drop
      * @param event The {@link EntityExplodeEvent}
      */
-    //TODO: Rewrite this garbage
     public void blastMiningDropProcessing(float yield, EntityExplodeEvent event) {
         if (yield == 0)
             return;
 
-        //Strip out only stuff that gives mining XP
-        List<BlockState> ores = new ArrayList<>();
-
-        List<BlockState> notOres = new ArrayList<>();
+        var increasedYieldFromBonuses = yield + (yield * getOreBonus());
+        // Strip out only stuff that gives mining XP
+        List<Block> ores = new ArrayList<>();
+        List<Block> notOres = new ArrayList<>();
         for (Block targetBlock : event.blockList()) {
-            BlockState blockState = targetBlock.getState();
-            //Containers usually have 0 XP unless someone edited their config in a very strange way
-            if (ExperienceConfig.getInstance().getXp(PrimarySkillType.MINING, targetBlock) != 0
-                    && !(targetBlock instanceof Container)
-                    && !mcMMO.getPlaceStore().isTrue(targetBlock)) {
-                if(BlockUtils.isOre(blockState)) {
-                    ores.add(blockState);
-                } else {
-                    notOres.add(blockState);
+
+            if(mcMMO.getUserBlockTracker().isIneligible(targetBlock))
+                continue;
+
+            if (ExperienceConfig.getInstance().getXp(PrimarySkillType.MINING, targetBlock) != 0) {
+                if (BlockUtils.isOre(targetBlock) && !(targetBlock instanceof Container)) {
+                    ores.add(targetBlock);
                 }
+            } else {
+                notOres.add(targetBlock);
             }
         }
 
         int xp = 0;
-
-        float oreBonus = (float) (getOreBonus() / 100);
-        float debrisReduction = (float) (getDebrisReduction() / 100);
         int dropMultiplier = getDropMultiplier();
-        float debrisYield = yield - debrisReduction;
 
-        //Drop "debris" based on skill modifiers
-        for(BlockState blockState : notOres) {
-            if(isDropIllegal(blockState.getType()))
+        for(Block block : notOres) {
+            if (isDropIllegal(block.getType()))
                 continue;
 
-            if(RandomUtils.nextFloat() < debrisYield) {
-                Misc.spawnItem(getPlayer(), Misc.getBlockCenter(blockState), new ItemStack(blockState.getType()), ItemSpawnReason.BLAST_MINING_DEBRIS_NON_ORES); // Initial block that would have been dropped
+            if (block.getType().isItem() && Probability.ofPercent(50).evaluate()) {
+                ItemUtils.spawnItem(getPlayer(),
+                        Misc.getBlockCenter(block),
+                        new ItemStack(block.getType()),
+                        ItemSpawnReason.BLAST_MINING_DEBRIS_NON_ORES); // Initial block that would have been dropped
             }
         }
+        for (Block block : ores) {
+            // currentOreYield only used for drop calculations for ores
+            float currentOreYield = increasedYieldFromBonuses;
 
-        for (BlockState blockState : ores) {
-            if(isDropIllegal(blockState.getType()))
+            if (isDropIllegal(block.getType())) {
                 continue;
+            }
 
-            if (RandomUtils.nextFloat() < (yield + oreBonus)) {
-                xp += Mining.getBlockXp(blockState);
+            // Always give XP for every ore destroyed
+            xp += ExperienceConfig.getInstance().getXp(PrimarySkillType.MINING, block);
+            while(currentOreYield > 0) {
+                if (Probability.ofValue(currentOreYield).evaluate()) {
+                    Collection<ItemStack> oreDrops = isPickaxe(mmoPlayer.getPlayer().getInventory().getItemInMainHand())
+                            ? block.getDrops(mmoPlayer.getPlayer().getInventory().getItemInMainHand())
+                            : List.of(new ItemStack(block.getType()));
+                    ItemUtils.spawnItems(getPlayer(), Misc.getBlockCenter(block),
+                            oreDrops, BLAST_MINING_BLACKLIST, ItemSpawnReason.BLAST_MINING_ORES);
 
-                Misc.spawnItem(getPlayer(), Misc.getBlockCenter(blockState), new ItemStack(blockState.getType()), ItemSpawnReason.BLAST_MINING_ORES); // Initial block that would have been dropped
-
-                if (mcMMO.p.getAdvancedConfig().isBlastMiningBonusDropsEnabled() && !mcMMO.getPlaceStore().isTrue(blockState)) {
-                    for (int i = 1; i < dropMultiplier; i++) {
-//                        Bukkit.broadcastMessage("Bonus Drop on Ore: "+blockState.getType().toString());
-                        Misc.spawnItem(getPlayer(), Misc.getBlockCenter(blockState), new ItemStack(blockState.getType()), ItemSpawnReason.BLAST_MINING_ORES_BONUS_DROP); // Initial block that would have been dropped
+                    if (mcMMO.p.getAdvancedConfig().isBlastMiningBonusDropsEnabled()) {
+                        for (int i = 1; i < dropMultiplier; i++) {
+                            ItemUtils.spawnItems(getPlayer(),
+                                    Misc.getBlockCenter(block),
+                                    oreDrops,
+                                    BLAST_MINING_BLACKLIST,
+                                    ItemSpawnReason.BLAST_MINING_ORES_BONUS_DROP);
+                        }
                     }
                 }
+                currentOreYield = Math.max(currentOreYield - 1, 0);
             }
         }
 
-        //Replace the event blocklist with the newYield list
+        // Replace the event blocklist with the newYield list
         event.setYield(0F);
-//        event.blockList().clear();
-//        event.blockList().addAll(notOres);
-
         applyXpGain(xp, XPGainReason.PVE);
     }
 
@@ -244,10 +292,11 @@ public class MiningManager extends SkillManager {
      *
      * @return the Blast Mining tier
      */
-    public double getOreBonus() {
-        return getOreBonus(getBlastMiningTier());
+    public float getOreBonus() {
+        return (float) (mcMMO.p.getAdvancedConfig().getOreBonus(getBlastMiningTier()) / 100F);
     }
 
+    @Deprecated(since = "2.2.017", forRemoval = true)
     public static double getOreBonus(int rank) {
         return mcMMO.p.getAdvancedConfig().getOreBonus(rank);
     }
