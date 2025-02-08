@@ -11,7 +11,6 @@ import com.gmail.nossr50.datatypes.chat.ChatChannel;
 import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.player.UserManager;
 import com.gmail.nossr50.util.text.StringUtils;
 import org.bukkit.entity.Player;
@@ -31,9 +30,9 @@ public class PartyChatCommand extends BaseCommand {
     public void processCommand(String[] args) {
         BukkitCommandIssuer bukkitCommandIssuer = (BukkitCommandIssuer) getCurrentCommandIssuer();
 
-        if(args == null || args.length == 0) {
+        if (args == null || args.length == 0) {
             //Process with no arguments
-            if(bukkitCommandIssuer.isPlayer()) {
+            if (bukkitCommandIssuer.isPlayer()) {
                 McMMOPlayer mmoPlayer = UserManager.getPlayer(bukkitCommandIssuer.getPlayer());
                 pluginRef.getChatManager().setOrToggleChatChannel(mmoPlayer, ChatChannel.PARTY);
             } else {
@@ -46,7 +45,7 @@ public class PartyChatCommand extends BaseCommand {
             /*
              * Player Logic
              */
-            if(bukkitCommandIssuer.getIssuer() instanceof Player) {
+            if (bukkitCommandIssuer.getIssuer() instanceof Player) {
                 McMMOPlayer mmoPlayer = UserManager.getPlayer(bukkitCommandIssuer.getPlayer());
                 processCommandArgsPlayer(mmoPlayer, args);
             /*
@@ -73,14 +72,14 @@ public class PartyChatCommand extends BaseCommand {
      * @param args command arguments
      */
     private void processCommandArgsConsole(@NotNull String[] args) {
-        if(args.length <= 1) {
+        if (args.length <= 1) {
             //Only specific a party and not the message
             mcMMO.p.getLogger().severe("You need to specify a party name and then write a message afterwards.");
         } else {
             //Grab party
             Party targetParty = mcMMO.p.getPartyManager().getParty(args[0]);
 
-            if(targetParty != null) {
+            if (targetParty != null) {
                 pluginRef.getChatManager().processConsoleMessage(StringUtils.buildStringAfterNthElement(args, 1), targetParty);
             } else {
                 mcMMO.p.getLogger().severe("A party with that name doesn't exist!");

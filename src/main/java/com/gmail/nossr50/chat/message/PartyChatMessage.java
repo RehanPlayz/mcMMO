@@ -1,6 +1,7 @@
 package com.gmail.nossr50.chat.message;
 
 import com.gmail.nossr50.chat.author.Author;
+import com.gmail.nossr50.config.ChatConfig;
 import com.gmail.nossr50.datatypes.chat.ChatChannel;
 import com.gmail.nossr50.datatypes.party.Party;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
@@ -51,7 +52,8 @@ public class PartyChatMessage extends AbstractChatMessage {
         messagePartyChatSpies(spyMessage);
 
         //Console message
-        mcMMO.p.getChatManager().sendConsoleMessage(author, spyMessage);
+        if (ChatConfig.getInstance().isConsoleIncludedInAudience(ChatChannel.PARTY))
+            mcMMO.p.getChatManager().sendConsoleMessage(author, spyMessage);
     }
 
     /**
@@ -65,11 +67,11 @@ public class PartyChatMessage extends AbstractChatMessage {
             Player player = mcMMOPlayer.getPlayer();
 
             //Check for toggled players
-            if(mcMMOPlayer.isPartyChatSpying()) {
+            if (mcMMOPlayer.isPartyChatSpying()) {
                 Party adminParty = mcMMOPlayer.getParty();
 
                 //Only message admins not part of this party
-                if(adminParty == null || adminParty != getParty()) {
+                if (adminParty == null || adminParty != getParty()) {
                     //TODO: Hacky, rewrite later
                     Audience audience = mcMMO.getAudiences().player(player);
                     audience.sendMessage(spyMessage);

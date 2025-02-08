@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -43,7 +44,7 @@ public class ZipLibrary {
 
         // Generate the proper date for the backup filename
         Date date = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US);
         File fileZip = new File(BACKUP_DIRECTORY + File.separator + dateFormat.format(date) + ".zip");
 
         // Create the Source List, and add directories/etc to the file.
@@ -73,8 +74,7 @@ public class ZipLibrary {
         for (File source : sources) {
             if (source.isDirectory()) {
                 zipDir(zipOut, "", source);
-            }
-            else {
+            } else {
                 zipFile(zipOut, "", source);
             }
         }
@@ -104,8 +104,7 @@ public class ZipLibrary {
         for (File source : files) {
             if (source.isDirectory()) {
                 zipDir(zos, path, source);
-            }
-            else {
+            } else {
                 zipFile(zos, path, source);
             }
         }

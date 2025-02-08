@@ -8,9 +8,8 @@ import com.gmail.nossr50.datatypes.skills.SubSkillType;
 import com.gmail.nossr50.mcMMO;
 import com.gmail.nossr50.skills.SkillManager;
 import com.gmail.nossr50.util.Permissions;
-import com.gmail.nossr50.util.random.RandomChanceUtil;
+import com.gmail.nossr50.util.random.ProbabilityUtil;
 import com.gmail.nossr50.util.skills.RankUtils;
-import com.gmail.nossr50.util.skills.SkillActivationType;
 import org.bukkit.block.Furnace;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
@@ -25,7 +24,7 @@ public class SmeltingManager extends SkillManager {
 
     public boolean isSecondSmeltSuccessful() {
         return Permissions.isSubSkillEnabled(getPlayer(), SubSkillType.SMELTING_SECOND_SMELT)
-                && RandomChanceUtil.isActivationSuccessful(SkillActivationType.RANDOM_LINEAR_100_SCALE_WITH_CAP, SubSkillType.SMELTING_SECOND_SMELT, getPlayer());
+                && ProbabilityUtil.isSkillRNGSuccessful(SubSkillType.SMELTING_SECOND_SMELT, mmoPlayer);
     }
 
     /**
@@ -37,8 +36,7 @@ public class SmeltingManager extends SkillManager {
         return Math.min(Short.MAX_VALUE, Math.max(1, burnTime * getFuelEfficiencyMultiplier()));
     }
 
-    public int getFuelEfficiencyMultiplier()
-    {
+    public int getFuelEfficiencyMultiplier() {
         return switch (RankUtils.getRank(getPlayer(), SubSkillType.SMELTING_FUEL_EFFICIENCY)) {
             case 1 -> 2;
             case 2 -> 3;
@@ -74,7 +72,7 @@ public class SmeltingManager extends SkillManager {
         FurnaceInventory furnaceInventory = furnace.getInventory();
         ItemStack furnaceResult = furnaceInventory.getResult();
 
-        if(furnaceResult == null)
+        if (furnaceResult == null)
             return true; //This actually means there is nothing yet in the resulting item slot, which means it should always be okay to double smelt
 
         int resultAmount = furnaceResult.getAmount(); //Amount before double smelt

@@ -6,7 +6,6 @@ import com.gmail.nossr50.datatypes.experience.FormulaType;
 import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.locale.LocaleLoader;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.party.PartyManager;
 import com.gmail.nossr50.util.EventUtils;
 import com.gmail.nossr50.util.Misc;
 import com.gmail.nossr50.util.sounds.SoundManager;
@@ -19,13 +18,14 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.UUID;
+import java.text.DecimalFormatSymbols;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class Party {
+
+    private static final DecimalFormat percent = new DecimalFormat("##0.00%", DecimalFormatSymbols.getInstance(Locale.US));
+
     private final @NotNull Predicate<CommandSender> samePartyPredicate;
     private final LinkedHashMap<UUID, String> members = new LinkedHashMap<>();
     private final List<Player> onlineMembers = new ArrayList<>();
@@ -86,13 +86,11 @@ public class Party {
         return onlineMembers;
     }
 
-    public List<Player> getVisibleMembers(Player player)
-    {
+    public List<Player> getVisibleMembers(Player player) {
         ArrayList<Player> visibleMembers = new ArrayList<>();
 
-        for(Player p : onlineMembers)
-        {
-            if(player.canSee(p))
+        for(Player p : onlineMembers) {
+            if (player.canSee(p))
                 visibleMembers.add(p);
         }
 
@@ -207,7 +205,6 @@ public class Party {
     }
 
     public String getXpToLevelPercentage() {
-        DecimalFormat percent = new DecimalFormat("##0.00%");
         return percent.format(this.getXp() / getXpToLevel());
     }
 
@@ -348,7 +345,7 @@ public class Party {
         for(UUID playerUUID : members.keySet()) {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
 
-            if(offlinePlayer.isOnline() && player.canSee((Player) offlinePlayer)) {
+            if (offlinePlayer.isOnline() && player.canSee((Player) offlinePlayer)) {
                 ChatColor onlineColor = leader.getUniqueId().equals(playerUUID) ? ChatColor.GOLD : ChatColor.GREEN;
                 coloredNames.add(onlineColor + offlinePlayer.getName());
             } else {
@@ -362,7 +359,7 @@ public class Party {
 
     private void buildChatMessage(@NotNull StringBuilder stringBuilder, String @NotNull [] names) {
         for(int i = 0; i < names.length; i++) {
-            if(i + 1 >= names.length) {
+            if (i + 1 >= names.length) {
                 stringBuilder
                         .append(names[i]);
             } else {

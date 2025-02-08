@@ -9,7 +9,6 @@ import com.gmail.nossr50.datatypes.player.McMMOPlayer;
 import com.gmail.nossr50.datatypes.player.PlayerProfile;
 import com.gmail.nossr50.datatypes.skills.PrimarySkillType;
 import com.gmail.nossr50.mcMMO;
-import com.gmail.nossr50.skills.child.FamilyTree;
 import com.gmail.nossr50.util.player.UserManager;
 import com.gmail.nossr50.util.skills.CombatUtils;
 import com.gmail.nossr50.util.skills.SkillTools;
@@ -20,7 +19,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.UUID;
 
 public final class ExperienceAPI {
@@ -518,7 +516,7 @@ public final class ExperienceAPI {
     }
 
     public static float getOfflineXPRaw(@NotNull OfflinePlayer offlinePlayer, @NotNull PrimarySkillType skillType) throws InvalidPlayerException, UnsupportedOperationException {
-        if(SkillTools.isChildSkill(skillType))
+        if (SkillTools.isChildSkill(skillType))
             throw new UnsupportedOperationException();
 
         return getOfflineProfile(offlinePlayer).getSkillXpLevelRaw(skillType);
@@ -706,7 +704,7 @@ public final class ExperienceAPI {
         PrimarySkillType skill = getSkillType(skillType);
 
         if (SkillTools.isChildSkill(skill)) {
-            Set<PrimarySkillType> parentSkills = FamilyTree.getParents(skill);
+            var parentSkills = mcMMO.p.getSkillTools().getChildSkillParents(skill);
 
             for (PrimarySkillType parentSkill : parentSkills) {
                 profile.addLevels(parentSkill, (levels / parentSkills.size()));
@@ -737,7 +735,7 @@ public final class ExperienceAPI {
         PrimarySkillType skill = getSkillType(skillType);
 
         if (SkillTools.isChildSkill(skill)) {
-            Set<PrimarySkillType> parentSkills = FamilyTree.getParents(skill);
+            var parentSkills = mcMMO.p.getSkillTools().getChildSkillParents(skill);
 
             for (PrimarySkillType parentSkill : parentSkills) {
                 profile.addLevels(parentSkill, (levels / parentSkills.size()));
@@ -1145,14 +1143,10 @@ public final class ExperienceAPI {
      * @param blockStates the blocks to reward XP for
      * @param mcMMOPlayer the target player
      */
-    public static void addXpFromBlocks(ArrayList<BlockState> blockStates, McMMOPlayer mcMMOPlayer)
-    {
-        for(BlockState bs : blockStates)
-        {
-            for(PrimarySkillType skillType : PrimarySkillType.values())
-            {
-                if(ExperienceConfig.getInstance().getXp(skillType, bs.getType()) > 0)
-                {
+    public static void addXpFromBlocks(ArrayList<BlockState> blockStates, McMMOPlayer mcMMOPlayer) {
+        for(BlockState bs : blockStates) {
+            for(PrimarySkillType skillType : PrimarySkillType.values()) {
+                if (ExperienceConfig.getInstance().getXp(skillType, bs.getType()) > 0) {
                     mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(skillType, bs.getType()), XPGainReason.PVE, XPGainSource.SELF);
                 }
             }
@@ -1160,18 +1154,19 @@ public final class ExperienceAPI {
     }
 
     /**
-     * Will add the appropriate type of XP from the block to the player based on the material of the blocks given if it matches the given skillType
+     * Will add the appropriate type of XP from the block to the player based on the material of the blocks given
+     * if it matches the given skillType
      * @param blockStates the blocks to reward XP for
      * @param mcMMOPlayer the target player
      * @param skillType target primary skill
      */
-    public static void addXpFromBlocksBySkill(ArrayList<BlockState> blockStates, McMMOPlayer mcMMOPlayer, PrimarySkillType skillType)
-    {
-        for(BlockState bs : blockStates)
-        {
-            if(ExperienceConfig.getInstance().getXp(skillType, bs.getType()) > 0)
-            {
-                mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(skillType, bs.getType()), XPGainReason.PVE, XPGainSource.SELF);
+    public static void addXpFromBlocksBySkill(ArrayList<BlockState> blockStates, McMMOPlayer mcMMOPlayer,
+                                              PrimarySkillType skillType) {
+        for(BlockState bs : blockStates) {
+            if (ExperienceConfig.getInstance().getXp(skillType, bs.getType()) > 0) {
+                mcMMOPlayer.applyXpGain(skillType,
+                        ExperienceConfig.getInstance().getXp(skillType, bs.getType()),
+                        XPGainReason.PVE, XPGainSource.SELF);
             }
         }
     }
@@ -1181,13 +1176,11 @@ public final class ExperienceAPI {
      * @param blockState The target blockstate
      * @param mcMMOPlayer The target player
      */
-    public static void addXpFromBlock(BlockState blockState, McMMOPlayer mcMMOPlayer)
-    {
-        for(PrimarySkillType skillType : PrimarySkillType.values())
-        {
-            if(ExperienceConfig.getInstance().getXp(skillType, blockState.getType()) > 0)
-            {
-                mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(skillType, blockState.getType()), XPGainReason.PVE, XPGainSource.SELF);
+    public static void addXpFromBlock(BlockState blockState, McMMOPlayer mcMMOPlayer) {
+        for(PrimarySkillType skillType : PrimarySkillType.values()) {
+            if (ExperienceConfig.getInstance().getXp(skillType, blockState.getType()) > 0) {
+                mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(
+                        skillType, blockState.getType()), XPGainReason.PVE, XPGainSource.SELF);
             }
         }
     }
@@ -1198,11 +1191,10 @@ public final class ExperienceAPI {
      * @param mcMMOPlayer The target player
      * @param skillType target primary skill
      */
-    public static void addXpFromBlockBySkill(BlockState blockState, McMMOPlayer mcMMOPlayer, PrimarySkillType skillType)
-    {
-        if(ExperienceConfig.getInstance().getXp(skillType, blockState.getType()) > 0)
-        {
-            mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(skillType, blockState.getType()), XPGainReason.PVE, XPGainSource.SELF);
+    public static void addXpFromBlockBySkill(BlockState blockState, McMMOPlayer mcMMOPlayer, PrimarySkillType skillType) {
+        if (ExperienceConfig.getInstance().getXp(skillType, blockState.getType()) > 0) {
+            mcMMOPlayer.applyXpGain(skillType, ExperienceConfig.getInstance().getXp(skillType, blockState.getType()),
+                    XPGainReason.PVE, XPGainSource.SELF);
         }
     }
 
